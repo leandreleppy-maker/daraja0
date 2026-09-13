@@ -1,0 +1,241 @@
+// DARAJA — Schéma de base de données
+// SaaS d'archivage de documents pour Entreprises et Administrations Africaines
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// Organisations (entreprise, ONG, mairie, ministère…)
+// ─────────────────────────────────────────────
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  type      String   @default("pme") // tpe | pme | ong | cabinet | mairie | ministere | banque
+  country   String   @default("CI") // Code pays UEMOA/CEDEAO
+  city      String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members   Member[]
+  folders   Folder[]
+  documents Document[]
+  auditLogs AuditLog[]
+  shareLinks ShareLink[]
+  subscription Subscription?
+}
+
+// ─────────────────────────────────────────────
+// Utilisateurs
+// ─────────────────────────────────────────────
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String
+  passwordHash  String
+  phone         String?
+  avatarUrl     String?
+  twoFactorOn   Boolean  @default(false)
+  superAdmin    Boolean  @default(false)  // Super-admin plateforme DARAJA
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  memberships   Member[]
+  uploads       Document[]
+  auditLogs     AuditLog[]
+  sessions      Session[]
+  shareLinks    ShareLink[]
+}
+
+// ─────────────────────────────────────────────
+// Rôles au sein d'une organisation
+//  admin | manager | employe
+// ─────────────────────────────────────────────
+model Member {
+  id              String   @id @default(cuid())
+  userId          String
+  organizationId  String
+  role            String   @default("employe") // admin | manager | employe
+  createdAt       DateTime @default(now())
+
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+}
+
+// ─────────────────────────────────────────────
+// Sessions (cookie-based, simule JWT)
+// ─────────────────────────────────────────────
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─────────────────────────────────────────────
+// Plans tarifaires
+//  gratuit | entreprise | etat
+// ─────────────────────────────────────────────
+model Plan {
+  id              String   @id @default(cuid())
+  code            String   @unique // gratuit | entreprise | etat
+  name            String
+  priceMonthlyFcfa Int     @default(0)
+  storageGb       Int      @default(5)
+  maxUsers        Int      @default(1) // -1 = illimité
+  maxUploadsMonth Int      @default(100) // -1 = illimité
+  features        String   @default("") // JSON serialisé
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id              String   @id @default(cuid())
+  organizationId  String   @unique
+  planId          String
+  status          String   @default("active") // active | pending | canceled | expired
+  startedAt       DateTime @default(now())
+  expiresAt       DateTime?
+  paymentProvider String?  // cinetpay | fedapay | wave | orange_money | virement
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  plan         Plan          @relation(fields: [planId], references: [id])
+}
+
+// ─────────────────────────────────────────────
+// Dossiers (arborescence, hiérarchie parent/enfant)
+// ─────────────────────────────────────────────
+model Folder {
+  id              String   @id @default(cuid())
+  name            String
+  color           String?  // pastille de couleur (hex ou nom)
+  icon            String?  // nom d'icône lucide
+  parentId        String?  // hiérarchie
+  organizationId  String
+  createdBy       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent          Folder?      @relation("FolderTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children        Folder[]     @relation("FolderTree")
+  documents       Document[]
+
+  @@index([organizationId])
+  @@index([parentId])
+}
+
+// ─────────────────────────────────────────────
+// Documents archivés
+// ─────────────────────────────────────────────
+model Document {
+  id              String   @id @default(cuid())
+  title           String
+  description     String?
+  // Type mime / catégorie
+  type            String   @default("pdf") // pdf | image | audio | scan | autre
+  mimeType        String?
+  sizeBytes       Int      @default(0)
+  // Stockage local (simule S3) — chemin relatif
+  storagePath     String
+  // Classification IA DARAJA BRAIN
+  aiCategory      String?  // ex: Compta > Factures > CIE > Oct 2026
+  aiTags          String?  // JSON array
+  aiOcrText       String?  // texte extrait par OCR
+  aiLanguage      String?  // FR, EN, Bambara, Wolof
+  aiConfidence    Float?   // 0..1
+  // Workflow
+  status          String   @default("uploaded") // uploaded | ocr_done | validated | signed | archived | deleted
+  // Signatures
+  signedBy        String?
+  signedAt        DateTime?
+  // Liens
+  organizationId  String
+  folderId        String?
+  uploadedById    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  folder          Folder?      @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  uploadedBy      User?        @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  shareLinks      ShareLink[]
+
+  @@index([organizationId])
+  @@index([folderId])
+  @@index([uploadedById])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────
+// Liens de partage (tokens sécurisés, style Google Drive)
+// ─────────────────────────────────────────────
+model ShareLink {
+  id              String    @id @default(cuid())
+  token           String    @unique  // 32-char hex, jamais l'ID du document
+  documentId      String
+  organizationId  String
+  createdById     String
+  // Permissions
+  permission      String    @default("view") // view | edit | private
+  passwordHash    String?   // Optionnel : mot de passe requis pour accéder
+  expiresAt       DateTime? // Optionnel : date d'expiration du lien
+  // Statistiques
+  viewCount       Int       @default(0)
+  downloadCount   Int       @default(0)
+  lastViewedAt    DateTime?
+  // Révocation
+  revokedAt       DateTime? // null = actif, non-null = révoqué
+  // Métadonnées
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  document        Document   @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy       User       @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([organizationId])
+  @@index([createdById])
+  @@index([token])
+}
+
+// ─────────────────────────────────────────────
+// Journal d'audit (traçabilité, conformité UEMOA / ISO 27001)
+// ─────────────────────────────────────────────
+model AuditLog {
+  id              String   @id @default(cuid())
+  organizationId  String
+  userId          String?
+  action          String   // upload | download | delete | rename | share | sign | login | settings
+  targetType      String?  // document | folder | user | plan
+  targetId        String?
+  metadata        String?  // JSON serialisé
+  ipAddress       String?
+  createdAt       DateTime @default(now())
+
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user            User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([userId])
+  @@index([action])
+}

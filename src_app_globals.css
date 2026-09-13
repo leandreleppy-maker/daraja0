@@ -1,0 +1,202 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-poppins);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.5rem;
+
+  /* DARAJA brand palette */
+  --background: #f5f7fa;          /* Fond Gris Clair */
+  --foreground: #1a1a1a;          /* Noir Charbon */
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+
+  /* Primaire : Bleu Confiance #003366 */
+  --primary: #003366;
+  --primary-foreground: #ffffff;
+
+  /* Secondaire : Or Valeur #D4AF37 */
+  --gold: #d4af37;
+  --gold-foreground: #1a1a1a;
+  --secondary: #eef2f7;
+  --secondary-foreground: #003366;
+
+  /* Accent : Vert Validation #00A651 */
+  --success: #00a651;
+  --success-foreground: #ffffff;
+
+  --muted: #eef2f7;
+  --muted-foreground: #5b6470;
+  --accent: #f0e9d2;
+  --accent-foreground: #5a3d00;
+
+  --destructive: #c0392b;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #003366;
+
+  --chart-1: #003366;
+  --chart-2: #d4af37;
+  --chart-3: #00a651;
+  --chart-4: #2b6cb0;
+  --chart-5: #ed8936;
+
+  --sidebar: #003366;
+  --sidebar-foreground: #e8edf3;
+  --sidebar-primary: #d4af37;
+  --sidebar-primary-foreground: #1a1a1a;
+  --sidebar-accent: #0a4a8a;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #0a3d70;
+  --sidebar-ring: #d4af37;
+}
+
+.dark {
+  --background: #0b1220;
+  --foreground: #e8edf3;
+  --card: #111a2b;
+  --card-foreground: #e8edf3;
+  --popover: #111a2b;
+  --popover-foreground: #e8edf3;
+  --primary: #1b5aa8;
+  --primary-foreground: #ffffff;
+  --gold: #d4af37;
+  --gold-foreground: #1a1a1a;
+  --secondary: #1a2740;
+  --secondary-foreground: #e8edf3;
+  --success: #00a651;
+  --success-foreground: #ffffff;
+  --muted: #1a2740;
+  --muted-foreground: #9fb0c3;
+  --accent: #2a3c5c;
+  --accent-foreground: #e8edf3;
+  --destructive: #e74c3c;
+  --border: #1f2c45;
+  --input: #1f2c45;
+  --ring: #1b5aa8;
+  --chart-1: #1b5aa8;
+  --chart-2: #d4af37;
+  --chart-3: #00a651;
+  --chart-4: #4299e1;
+  --chart-5: #ed8936;
+  --sidebar: #0a1830;
+  --sidebar-foreground: #e8edf3;
+  --sidebar-primary: #d4af37;
+  --sidebar-primary-foreground: #1a1a1a;
+  --sidebar-accent: #1a2740;
+  --sidebar-accent-foreground: #e8edf3;
+  --sidebar-border: #1f2c45;
+  --sidebar-ring: #d4af37;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.01em;
+  }
+}
+
+/* Custom scrollbar for long lists */
+.daraja-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.daraja-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.daraja-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+.daraja-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Bridge pattern background (subtle) */
+.daraja-bridge-bg {
+  background-image:
+    linear-gradient(180deg, rgba(0, 51, 102, 0.04) 0%, rgba(212, 175, 55, 0.04) 100%);
+}
+
+/* Pillar animations for landing */
+@keyframes pillars-rise {
+  from { transform: translateY(20px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.pillar-anim {
+  animation: pillars-rise 0.6s ease-out both;
+}
+
+@keyframes doc-flow {
+  0%   { transform: translateY(0)    scale(0.8); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translateY(-40px) scale(1); opacity: 0; }
+}
+.doc-flow-anim {
+  animation: doc-flow 2.4s ease-in-out infinite;
+}
+
+/* Smooth transitions */
+.daraja-card {
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+.daraja-card:hover {
+  box-shadow: 0 8px 24px -8px rgba(0, 51, 102, 0.18);
+  transform: translateY(-1px);
+}
